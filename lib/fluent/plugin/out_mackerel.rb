@@ -105,6 +105,9 @@ module Fluent
     def generate_metric(key, tokens, time, value)
       name = @name_processor.nil? ? key :
                @name_processor.map{ |p| p.call(:out_key => key, :tokens => tokens) }.join('.')
+      unless @container_id.nil?
+        name = "name.#{container_id}"
+      end
 
       metric = {
         'value' => value,
@@ -124,6 +127,10 @@ module Fluent
         tags[tag] = true
         tokens = tag.split('.')
 
+        if record.has_key?('container_id')
+          container_id = record["container_id"]
+        end
+
         if @out_keys
           out_keys = @out_keys.select{|key| record.has_key?(key)}
         else # @out_key_pattern
@@ -134,6 +141,12 @@ module Fluent
           metrics << generate_metric(key, tokens, time, record[key].to_f)
           time_latest = time if time_latest == 0 || time_latest < time
           processed[tag + "." + key] = true
+        end
+
+        if container_id
+          metrics.each do |m|
+            m['name'] = m['name'].gsub('#', container_id)
+          end
         end
       end
 
