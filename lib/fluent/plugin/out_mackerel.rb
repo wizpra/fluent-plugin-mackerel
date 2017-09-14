@@ -160,13 +160,18 @@ module Fluent
           end
         end
       end
-
       send(metrics) unless metrics.empty?
       metrics.clear
     end
 
     def send(metrics)
       log.debug("out_mackerel: #{metrics}")
+
+      if metrics.collect{|m| m['time']}.any?{|w| w == 0}
+        log.warn('out_mackerel: time in metrics is zero')
+        return
+      end
+
       begin
         if @hostid
           @mackerel.post_metrics(metrics)
