@@ -135,6 +135,12 @@ module Fluent
           time_latest = time if time_latest == 0 || time_latest < time
           processed[tag + "." + key] = true
         end
+
+        if record.has_key?('container_id')
+          metrics.each do |m|
+            m['name'] = m['name'].gsub('#', record["container_id"])
+          end
+        end
       end
 
       if @out_keys && @use_zero_for_empty
@@ -147,13 +153,18 @@ module Fluent
           end
         end
       end
-
       send(metrics) unless metrics.empty?
       metrics.clear
     end
 
     def send(metrics)
       log.debug("out_mackerel: #{metrics}")
+
+      if metrics.collect{|m| m['time']}.any?{|w| w == 0}
+        log.warn('out_mackerel: time in metrics is zero')
+        return
+      end
+
       begin
         if @hostid
           @mackerel.post_metrics(metrics)
