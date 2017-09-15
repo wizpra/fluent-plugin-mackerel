@@ -124,10 +124,6 @@ module Fluent
         tags[tag] = true
         tokens = tag.split('.')
 
-        if record.has_key?('container_id')
-          container_id = record["container_id"]
-        end
-
         if @out_keys
           out_keys = @out_keys.select{|key| record.has_key?(key)}
         else # @out_key_pattern
@@ -140,9 +136,9 @@ module Fluent
           processed[tag + "." + key] = true
         end
 
-        if container_id
+        if record.has_key?('container_id')
           metrics.each do |m|
-            m['name'] = m['name'].gsub('#', container_id)
+            m['name'] = m['name'].gsub('#', record["container_id"])
           end
         end
       end
