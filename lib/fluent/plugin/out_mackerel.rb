@@ -105,9 +105,6 @@ module Fluent
     def generate_metric(key, tokens, time, value)
       name = @name_processor.nil? ? key :
                @name_processor.map{ |p| p.call(:out_key => key, :tokens => tokens) }.join('.')
-      unless @container_id.nil?
-        name = "name.#{container_id}"
-      end
 
       metric = {
         'value' => value,
